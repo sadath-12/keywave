@@ -39,7 +39,6 @@ func (api *KeyValueHandler) putKey(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	fmt.Println("connection putting ----------------")
 	res, err := conn.Put(ctx, &storagepb.PutRequest{
 		Key: key,
 		Value: &storagepb.VersionedValue{
@@ -51,7 +50,6 @@ func (api *KeyValueHandler) putKey(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println("err", err)
 	}
-	fmt.Println("connection putted ----------------")
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

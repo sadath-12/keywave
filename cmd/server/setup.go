@@ -33,7 +33,6 @@ func setupLogger() (kitlog.Logger, shutdownFunc) {
 }
 
 func setupEngine(logger kitlog.Logger) (storage.Engine, shutdownFunc) {
-	fmt.Println("opts is", opts)
 
 	level.Info(logger).Log("msg", "using in-memory storage engine")
 	return inmemory.New(), noopShutdown
