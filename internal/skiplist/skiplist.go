@@ -1,7 +1,6 @@
 package skiplist
 
 import (
-	"fmt"
 	"math/rand"
 	"sync"
 	"sync/atomic"
@@ -85,7 +84,7 @@ func (l *Skiplist[K, V]) findLess(key K, searchPath *listNodes[K, V], stopAt int
 }
 
 // will insert an item to list right before the its lesser value from bottom down approach
-func (l *Skiplist[K, V]) Insert(key K, value V)  {
+func (l *Skiplist[K, V]) Insert(key K, value V) {
 	l.mut.Lock()
 	defer l.mut.Unlock()
 
@@ -123,7 +122,6 @@ func (l *Skiplist[K, V]) Insert(key K, value V)  {
 	for level := 0; level < newheight; level++ {
 		searchPath[level].storeNext(level, newnode)
 	}
-	fmt.Println("value added----------------")
 	atomic.AddInt32(&l.size, 1)
 }
 
@@ -227,7 +225,6 @@ func (l *Skiplist[K, V]) LessOrEqual(key K) (retk K, retv V, found bool) {
 
 	return node.key, node.loadValue(), true
 }
-
 
 func randomHeight() int {
 	height := 1

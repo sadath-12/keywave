@@ -1,1 +1,0 @@
-how exactly is data been arranged in skiplist

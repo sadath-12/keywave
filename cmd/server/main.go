@@ -40,10 +40,10 @@ func main() {
 		closeLogger,
 	}
 
-	// if opts.RestAPI.Enabled {
+	if opts.RestAPI.Enabled {
 		_, closeAPIServer := setupAPIServer(&wg, logger)
 		shutdownOrder = append([]shutdownFunc{closeAPIServer}, shutdownOrder...)
-	// }
+	}
 
 	// Block until we receive a signal to shut down.
 	<-interrupt
