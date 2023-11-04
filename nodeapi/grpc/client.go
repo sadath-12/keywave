@@ -8,14 +8,16 @@ import (
 	"github.com/sadath-12/keywave/internal/multierror"
 	"github.com/sadath-12/keywave/membership/proto"
 	"github.com/sadath-12/keywave/nodeapi"
+	replicationpb "github.com/sadath-12/keywave/replication/proto"
 	storagepb "github.com/sadath-12/keywave/storage/proto"
 )
 
 type Client struct {
-	storageClient    storagepb.StorageServiceClient
-	membershipClient proto.MembershipClient
-	onClose          []func() error
-	closed           uint32
+	replicationClient replicationpb.ReplicationClient
+	storageClient     storagepb.StorageServiceClient
+	membershipClient  proto.MembershipClient
+	onClose           []func() error
+	closed            uint32
 }
 
 func (c *Client) Close() error {
