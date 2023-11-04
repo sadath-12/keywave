@@ -2,7 +2,10 @@ package grpc
 
 import (
 	"context"
+	"sync/atomic"
+	"time"
 
+	"github.com/sadath-12/keywave/internal/multierror"
 	"github.com/sadath-12/keywave/membership/proto"
 	"github.com/sadath-12/keywave/nodeapi"
 	storagepb "github.com/sadath-12/keywave/storage/proto"
@@ -13,6 +16,26 @@ type Client struct {
 	membershipClient proto.MembershipClient
 	onClose          []func() error
 	closed           uint32
+}
+
+func (c *Client) Close() error {
+	if !atomic.CompareAndSwapUint32(&c.closed, 0, 1) {
+		return nil // already closed
+	}
+
+	errs := multierror.New[int]()
+
+	for idx, f := range c.onClose {
+		if err := f(); err != nil {
+			errs.Add(idx, err)
+		}
+	}
+
+	return errs.Combined()
+}
+
+func (c *Client) IsClosed() bool {
+	return atomic.LoadUint32(&c.closed) == 1
 }
 
 func (c *Client) addOnCloseHook(f func() error) {
@@ -60,6 +83,43 @@ func (c *Client) StoragePut(ctx context.Context, key string, value nodeapi.Versi
 
 	return &nodeapi.StoragePutResult{
 		Version: resp.Version,
+	}, nil
+}
+
+func (c *Client) Ping(ctx context.Context) (uint64, error) {
+	resp, err := c.membershipClient.Ping(ctx, &proto.PingRequest{})
+	if err != nil {
+		return 0, err
+	}
+
+	return resp.StateHash, nil
+}
+
+func (c *Client) PingIndirect(ctx context.Context, nodeID nodeapi.NodeID, timeout time.Duration) (nodeapi.PingResult, error) {
+	resp, err := c.membershipClient.PingIndirect(ctx, &proto.PingIndirectRequest{
+		NodeId:  uint32(nodeID),
+		Timeout: timeout.Milliseconds(),
+	})
+
+	if err != nil {
+		return nodeapi.PingResult{}, err
+	}
+
+	var status nodeapi.NodeStatus
+
+	switch resp.Status {
+	case proto.Status_HEALTHY:
+		status = nodeapi.NodeStatusHealthy
+	case proto.Status_UNHEALTHY:
+		status = nodeapi.NodeStatusUnhealthy
+	case proto.Status_LEFT:
+		status = nodeapi.NodeStatusLeft
+	}
+
+	return nodeapi.PingResult{
+		Took:    time.Duration(resp.Duration) * time.Millisecond,
+		Message: resp.Message,
+		Status:  status,
 	}, nil
 }
 
