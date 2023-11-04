@@ -6,6 +6,7 @@ import (
 
 	membershippb "github.com/sadath-12/keywave/membership/proto"
 	"github.com/sadath-12/keywave/nodeapi"
+	replicationpb "github.com/sadath-12/keywave/replication/proto"
 	storagepb "github.com/sadath-12/keywave/storage/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -27,11 +28,13 @@ func Dial(ctx context.Context, addr string) (nodeapi.Client, error) {
 	}
 
 	storageClient := storagepb.NewStorageServiceClient(conn)
+	replicationClient := replicationpb.NewReplicationClient(conn)
 	membershipClient := membershippb.NewMembershipClient(conn)
-	c := &Client{
 
-		storageClient:    storageClient,
-		membershipClient: membershipClient,
+	c := &Client{
+		storageClient:     storageClient,
+		replicationClient: replicationClient,
+		membershipClient:  membershipClient,
 	}
 
 	c.addOnCloseHook(conn.Close)

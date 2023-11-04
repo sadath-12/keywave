@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package replication;
+
+option go_package = "github.com/sadath-12/keywave/replication/proto";
+
+message Empty {}
+
+message Value {
+    bytes data = 1;
+}
+
+message GetRequest {
+    string key = 1;
+}
+
+message GetResponse {
+    repeated Value values = 1;
+    string version = 2;
+}
+
+message PutRequest {
+    string key = 1;
+    Value value = 2;
+    string version = 3;
+}
+
+message PutResponse {
+    string version = 1;
+    int32 acknowledged = 2;
+}
+
+message DeleteRequest {
+    string key = 1;
+    string version = 2;
+}
+
+message DeleteResponse {
+    string version = 1;
+    int32 acknowledged = 2;
+}
+
+service Replication {
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc Put(PutRequest) returns (PutResponse);
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+}
