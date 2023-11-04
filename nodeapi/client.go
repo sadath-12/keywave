@@ -7,7 +7,7 @@ import "context"
 // Client is a client to a cluster node.
 type Client interface {
 	storageClient
-
+	membershipClient
 	IsClosed() bool
 	Close() error
 }

@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package membership;
+
+option go_package = "github.com/sadath-12/keywave/membership/proto";
+
+enum Status {
+    HEALTHY = 0;
+    UNHEALTHY = 1;
+    LEFT = 2;
+}
+
+message Node {
+    uint32 id = 1;
+    string name = 2;
+    string address = 3;
+    uint32 generation = 4;
+    Status status = 5;
+    string error = 6;
+    int64 run_id = 7;
+}
+
+message ListNodesRequest {
+}
+
+message ListNodesResponse {
+    repeated Node nodes = 1;
+}
+
+message PullPushStateRequest {
+    uint32 node_id = 1;
+    repeated Node nodes = 2;
+}
+
+message PullPushStateResponse {
+    repeated Node nodes = 1;
+}
+
+message PingRequest {
+}
+
+message PingResponse {
+    uint64 state_hash = 1;
+}
+
+message PingIndirectRequest {
+    uint32 node_id = 1;
+    int64 timeout = 2;
+}
+
+message PingIndirectResponse {
+    int64 duration = 1;
+    Status status = 2;
+    string message = 3;
+}
+
+service Membership {
+    rpc ListNodes(ListNodesRequest) returns (ListNodesResponse) {}
+    rpc Ping(PingRequest) returns (PingResponse) {}
+    rpc PullPushState(PullPushStateRequest) returns (PullPushStateResponse) {}
+    rpc PingIndirect(PingIndirectRequest) returns (PingIndirectResponse) {}
+}
