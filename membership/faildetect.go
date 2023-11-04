@@ -239,7 +239,6 @@ func (cl *SWIMCluster) indirectProbe(ctx context.Context, target *Node, nodes []
 			if err != nil {
 				return err
 			}
-
 			res, err := conn.PingIndirect(ctx, nodeapi.NodeID(target.ID), cl.probeTimeout)
 			if err != nil {
 				return err

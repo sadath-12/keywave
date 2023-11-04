@@ -30,18 +30,20 @@ func main() {
 
 	// Initialize all components.
 	logger, closeLogger := setupLogger()
+	cluster, closeCluster := setupCluster(logger)
 	engine, closeEngine := setupEngine(logger)
-	_, closeGRPCServer := setupGRPCServer(&wg, engine, logger)
+	_, closeGRPCServer := setupGRPCServer(&wg, engine, cluster, logger)
 
 	// Components must be shut down in a particular order.
 	shutdownOrder := []shutdownFunc{
 		closeGRPCServer,
 		closeEngine,
 		closeLogger,
+		closeCluster,
 	}
 
-		_, closeAPIServer := setupAPIServer(&wg, logger)
-		shutdownOrder = append([]shutdownFunc{closeAPIServer}, shutdownOrder...)
+	_, closeAPIServer := setupAPIServer(&wg, cluster, logger)
+	shutdownOrder = append([]shutdownFunc{closeAPIServer}, shutdownOrder...)
 
 	// Block until we receive a signal to shut down.
 	<-interrupt

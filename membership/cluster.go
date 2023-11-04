@@ -166,3 +166,78 @@ func (cl *SWIMCluster) Join(ctx context.Context, addr string) error {
 
 	return nil
 }
+
+// Leave removes the current node from the cluster. The leave call blocks until
+// at least one other node acknowledges the leave request.
+func (cl *SWIMCluster) Leave(ctx context.Context) error {
+	cl.setStatus(cl.selfID, StatusLeft, "")
+
+	if err := cl.waitForSync(ctx); err != nil {
+		return err
+	}
+
+	close(cl.stop)
+	cl.wg.Wait()
+
+	withLock(&cl.mut, func() {
+		self := cl.nodes[cl.selfID]
+		nodes := make(map[NodeID]Node, 1)
+		nodes[cl.selfID] = self
+
+		cl.nodes = nodes
+		cl.stateHash = self.Hash64()
+
+		for id, conn := range cl.connections {
+			if err := conn.Close(); err != nil {
+				level.Warn(cl.logger).Log("msg", "failed to close connection", "node", id, "err", err)
+			}
+
+			delete(cl.connections, id)
+		}
+	})
+
+	return nil
+}
+
+
+// waitForSync blocks until at least one other node acknowledges the state update.
+func (cl *SWIMCluster) waitForSync(ctx context.Context) error {
+	var (
+		start = time.Now()
+		done  bool
+	)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(500 * time.Millisecond):
+		}
+
+		withLock(cl.mut.RLocker(), func() {
+			var numAlive int
+
+			for _, node := range cl.nodes {
+				if node.ID != cl.selfID && node.Status == StatusHealthy {
+					numAlive++
+				}
+			}
+
+			if numAlive == 0 {
+				done = true
+				return
+			}
+
+			for _, t := range cl.lastSync {
+				if t.After(start) {
+					done = true
+					return
+				}
+			}
+		})
+
+		if done {
+			return nil
+		}
+	}
+}
