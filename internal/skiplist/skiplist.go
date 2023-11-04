@@ -1,6 +1,7 @@
 package skiplist
 
 import (
+	"fmt"
 	"math/rand"
 	"sync"
 	"sync/atomic"
@@ -92,6 +93,7 @@ func (l *Skiplist[K, V]) Insert(key K, value V) {
 
 	l.findLess(key, &searchPath, 0)
 
+	fmt.Println("searchpath is", searchPath)
 	if searchPath[0] != nil {
 		node := searchPath[0].loadNext(0)
 		if node != nil && l.compareKeys(key, node.key) == 0 {
@@ -104,7 +106,11 @@ func (l *Skiplist[K, V]) Insert(key K, value V) {
 	newnode.storeValue(value)
 
 	height := l.Height()
+	fmt.Println("current height is", height)
 	newheight := randomHeight()
+	fmt.Println("new height is", newheight)
+
+	fmt.Println("head is",l.head)
 
 	if newheight > height {
 		for level := height; level < newheight; level++ {
